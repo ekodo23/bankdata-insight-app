@@ -5,7 +5,6 @@ from config import Config
 from database import db
 from validators import BankDataValidator
 from analytics import BankingAnalytics
-import pandas as pd
 import io
 import csv
 import json
