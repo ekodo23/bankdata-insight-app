@@ -69,7 +69,15 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    stats = db.fetch_one("SELECT (SELECT COUNT(*) FROM transactions) as nb, (SELECT COALESCE(SUM(montant),0) FROM transactions WHERE type='DEPOT') as depots, (SELECT COALESCE(SUM(montant),0) FROM transactions WHERE type='RETRAIT') as retraits, (SELECT COUNT(*) FROM enquetes_satisfaction) as enquetes, (SELECT COALESCE(AVG(score_global),0) FROM enquetes_satisfaction) as score, (SELECT COUNT(*) FROM produits_souscrits) as produits, (SELECT COUNT(DISTINCT client_id) FROM transactions) as clients")
+    stats = {
+        'nb': db.fetch_one("SELECT COUNT(*) as c FROM transactions")['c'],
+        'depots': db.fetch_one("SELECT COALESCE(SUM(montant),0) as c FROM transactions WHERE type='DEPOT'")['c'],
+        'retraits': db.fetch_one("SELECT COALESCE(SUM(montant),0) as c FROM transactions WHERE type='RETRAIT'")['c'],
+        'enquetes': db.fetch_one("SELECT COUNT(*) as c FROM enquetes_satisfaction")['c'],
+        'score': db.fetch_one("SELECT COALESCE(AVG(score_global),0) as c FROM enquetes_satisfaction")['c'],
+        'produits': db.fetch_one("SELECT COUNT(*) as c FROM produits_souscrits")['c'],
+        'clients': db.fetch_one("SELECT COUNT(DISTINCT client_id) as c FROM transactions")['c']
+    }
     return render_template('dashboard.html', stats=stats, transactions_mois=[], satisfaction_agence=[], produits_pop=[])
 
 @app.route('/collecte/transactions', methods=['GET', 'POST'])
@@ -157,5 +165,5 @@ def init_database():
 
 if __name__ == '__main__':
     init_database()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+        if not db.fetch_one("SELECT id FROM users WHERE username = 'admin'"):
+        db.execute_query("INSERT INTO users (username, password, role, agence, email) VALUES ('admin','admin123','admin','Siege','admin@banque.cm')")
