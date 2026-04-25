@@ -13,11 +13,6 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 
-# Login Manager
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
 # Initialisation
 analytics_engine = BankingAnalytics(db)
 validator = BankDataValidator()
