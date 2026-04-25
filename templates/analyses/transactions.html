@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Analyse Transactions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📊 Analyse Descriptive des Transactions</h1>
+    <p>Statistiques et tendances des opérations bancaires</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">💳</div>
+        <div class="stat-value">{{ stats_descriptives.nb_total }}</div>
+        <div class="stat-label">Total Transactions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value">{{ "%.0f"|format(stats_descriptives.montant_total) }} XAF</div>
+        <div class="stat-label">Montant Total</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value">{{ stats_descriptives.moyenne }} XAF</div>
+        <div class="stat-label">Montant Moyen</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🔽</div>
+        <div class="stat-value">{{ stats_descriptives.minimum }} XAF</div>
+        <div class="stat-label">Minimum</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🔼</div>
+        <div class="stat-value">{{ stats_descriptives.maximum }} XAF</div>
+        <div class="stat-label">Maximum</div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Volume Mensuel (12 mois)</h3>
+        <canvas id="chartMensuel"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Répartition par Agence</h3>
+        <canvas id="chartAgences"></canvas>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Performance par Canal</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Canal</th>
+                <th>Volume</th>
+                <th>Montant Total</th>
+                <th>Montant Moyen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for canal in analyse_canaux %}
+            <tr>
+                <td>{{ canal.canal }}</td>
+                <td>{{ canal.volume }}</td>
+                <td>{{ "%.0f"|format(canal.montant_total) }} XAF</td>
+                <td>{{ canal.montant_moyen }} XAF</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Détail Mensuel</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Période</th>
+                <th>Volume</th>
+                <th>Montant Total</th>
+                <th>Moyenne</th>
+                <th>Dépôts</th>
+                <th>Retraits</th>
+                <th>Virements</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mois in analyse_mensuelle %}
+            <tr>
+                <td>{{ mois.periode }}</td>
+                <td>{{ mois.volume }}</td>
+                <td>{{ "%.0f"|format(mois.montant_total) }} XAF</td>
+                <td>{{ mois.montant_moyen }} XAF</td>
+                <td>{{ mois.nb_depots }}</td>
+                <td>{{ mois.nb_retraits }}</td>
+                <td>{{ mois.nb_virements }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ctx1 = document.getElementById('chartMensuel').getContext('2d');
+new Chart(ctx1, {
+    type: 'line',
+    data: {
+        labels: [{% for m in analyse_mensuelle %}'{{ m.periode }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Volume',
+            data: [{% for m in analyse_mensuelle %}{{ m.volume }}{% if not loop.last %},{% endif %}{% endfor %}],
+            borderColor: '#1a237e',
+            backgroundColor: 'rgba(26,35,126,0.1)',
+            tension: 0.3
+        }]
+    }
+});
+
+const ctx2 = document.getElementById('chartAgences').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: [{% for a in analyse_agences %}'{{ a.agence }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Volume',
+            data: [{% for a in analyse_agences %}{{ a.volume }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#2ecc71'
+        }]
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>📊 Tableau de Bord</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">💳</div>
+            <div class="stat-value">{{ stats.nb_transactions }}</div>
+            <div class="stat-label">Transactions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📥</div>
+            <div class="stat-value">{{ "%.0f"|format(stats.total_depots) }} XAF</div>
+            <div class="stat-label">Total Dépôts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📤</div>
+            <div class="stat-value">{{ "%.0f"|format(stats.total_retraits) }} XAF</div>
+            <div class="stat-label">Total Retraits</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value">{{ "%.1f"|format(stats.score_moyen) }}/10</div>
+            <div class="stat-label">Satisfaction</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-value">{{ stats.nb_produits }}</div>
+            <div class="stat-label">Produits</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value">{{ stats.clients_actifs }}</div>
+            <div class="stat-label">Clients actifs</div>
+        </div>
+    </div>
+    
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Volume Transactions (6 mois)</h3>
+            <canvas id="chartTransactions"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Satisfaction par Agence</h3>
+            <canvas id="chartSatisfaction"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Top 5 Produits</h3>
+            <canvas id="chartProduits"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ctx1 = document.getElementById('chartTransactions').getContext('2d');
+new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: [{% for t in transactions_mois %}'{{ t.mois }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Nombre de transactions',
+            data: [{% for t in transactions_mois %}{{ t.nb }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#3498db'
+        }]
+    }
+});
+
+const ctx2 = document.getElementById('chartSatisfaction').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: [{% for s in satisfaction_agence %}'{{ s.agence }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Score moyen /10',
+            data: [{% for s in satisfaction_agence %}{{ s.score_moyen }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#2ecc71'
+        }]
+    }
+});
+
+const ctx3 = document.getElementById('chartProduits').getContext('2d');
+new Chart(ctx3, {
+    type: 'pie',
+    data: {
+        labels: [{% for p in produits_pop %}'{{ p.type_produit }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for p in produits_pop %}{{ p.nb_souscriptions }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6']
+        }]
+    }
+});
+</script>
+{% endblock %}

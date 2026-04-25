@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Analyse Satisfaction{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>⭐ Analyse de la Satisfaction Client</h1>
+    <p>Indicateurs de qualité de service</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ scores_dimensions.score_global_moyen }}/10</div>
+        <div class="stat-label">Score Global Moyen</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value">{{ scores_dimensions.nb_enquetes }}</div>
+        <div class="stat-label">Enquêtes réalisées</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">👍</div>
+        <div class="stat-value">{{ taux_recommandation.taux_reco }}%</div>
+        <div class="stat-label">Taux de recommandation</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🤝</div>
+        <div class="stat-value">{{ scores_dimensions.score_accueil_moyen }}/10</div>
+        <div class="stat-label">Score Accueil</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💻</div>
+        <div class="stat-value">{{ scores_dimensions.score_digital_moyen }}/10</div>
+        <div class="stat-label">Score Digital</div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Distribution des Scores</h3>
+        <canvas id="chartDistribution"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Évolution Mensuelle</h3>
+        <canvas id="chartEvolution"></canvas>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Satisfaction par Agence</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Agence</th>
+                <th>Score Moyen</th>
+                <th>Nombre d'enquêtes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agence in par_agence %}
+            <tr>
+                <td>{{ agence.agence }}</td>
+                <td>{{ agence.score_moyen }}/10</td>
+                <td>{{ agence.nb_reponses }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Répartition par Catégorie</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Catégorie</th>
+                <th>Nombre de clients</th>
+                <th>Pourcentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dist in distribution_scores %}
+            <tr>
+                <td>{{ dist.categorie }}</td>
+                <td>{{ dist.nb_clients }}</td>
+                <td>{{ dist.pourcentage }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ctx1 = document.getElementById('chartDistribution').getContext('2d');
+new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for d in distribution_scores %}'{{ d.categorie }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for d in distribution_scores %}{{ d.nb_clients }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: ['#e74c3c','#f39c12','#3498db','#2ecc71','#27ae60']
+        }]
+    }
+});
+
+const ctx2 = document.getElementById('chartEvolution').getContext('2d');
+new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: [{% for t in tendance_mensuelle %}'{{ t.mois }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Score moyen',
+            data: [{% for t in tendance_mensuelle %}{{ t.score_moyen }}{% if not loop.last %},{% endif %}{% endfor %}],
+            borderColor: '#1a237e',
+            backgroundColor: 'rgba(26,35,126,0.1)',
+            tension: 0.3
+        }]
+    }
+});
+</script>
+{% endblock %}

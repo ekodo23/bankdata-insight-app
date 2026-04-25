@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Analyse Produits{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📦 Analyse des Produits Bancaires</h1>
+    <p>Performance et répartition des souscriptions</p>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Volume par Type de Produit</h3>
+        <canvas id="chartVolume"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Évolution Mensuelle</h3>
+        <canvas id="chartEvolution"></canvas>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Détail par Type de Produit</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Souscriptions</th>
+                <th>Montant Total</th>
+                <th>Montant Moyen</th>
+                <th>Taux Moyen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produit in volume_produits %}
+            <tr>
+                <td><strong>{{ produit.type_produit }}</strong></td>
+                <td>{{ produit.nb_souscriptions }}</td>
+                <td>{{ "%.0f"|format(produit.montant_total) }} XAF</td>
+                <td>{{ produit.montant_moyen }} XAF</td>
+                <td>{{ produit.taux_moyen }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Performance par Agence</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Agence</th>
+                <th>Produits vendus</th>
+                <th>Montant Total</th>
+                <th>Clients uniques</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agence in performance_agences %}
+            <tr>
+                <td>{{ agence.agence }}</td>
+                <td>{{ agence.nb_produits }}</td>
+                <td>{{ "%.0f"|format(agence.montant_total) }} XAF</td>
+                <td>{{ agence.clients_uniques }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Conversion par Canal</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Canal</th>
+                <th>Souscriptions</th>
+                <th>Montant Total</th>
+                <th>Panier Moyen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for canal in conversion_canal %}
+            <tr>
+                <td>{{ canal.canal_souscription }}</td>
+                <td>{{ canal.nb_souscriptions }}</td>
+                <td>{{ "%.0f"|format(canal.montant_total) }} XAF</td>
+                <td>{{ canal.panier_moyen }} XAF</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ctx1 = document.getElementById('chartVolume').getContext('2d');
+new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: [{% for p in volume_produits %}'{{ p.type_produit }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Nombre de souscriptions',
+            data: [{% for p in volume_produits %}{{ p.nb_souscriptions }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#3498db'
+        }]
+    }
+});
+
+const ctx2 = document.getElementById('chartEvolution').getContext('2d');
+new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: [{% for e in evolution_mensuelle %}'{{ e.mois }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Souscriptions',
+            data: [{% for e in evolution_mensuelle %}{{ e.nb_souscriptions }}{% if not loop.last %},{% endif %}{% endfor %}],
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46,204,113,0.1)',
+            tension: 0.3
+        }]
+    }
+});
+</script>
+{% endblock %}

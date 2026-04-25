@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BankData Insight{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    {% if session.user_id %}
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/dashboard" class="nav-brand">🏦 BankData Insight</a>
+            <div class="nav-menu">
+                <div class="dropdown">
+                    <button class="dropbtn">📝 Collecte ▼</button>
+                    <div class="dropdown-content">
+                        <a href="/collecte/transactions">Transactions</a>
+                        <a href="/collecte/satisfaction">Satisfaction</a>
+                        <a href="/collecte/produits">Produits</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">📊 Analyses ▼</button>
+                    <div class="dropdown-content">
+                        <a href="/analyses/transactions">Transactions</a>
+                        <a href="/analyses/satisfaction">Satisfaction</a>
+                        <a href="/analyses/produits">Produits</a>
+                    </div>
+                </div>
+                <a href="/rapports">📄 Rapports</a>
+                {% if session.role == 'admin' %}
+                <a href="/utilisateurs">👥 Utilisateurs</a>
+                {% endif %}
+                <span class="user-info">👤 {{ session.username }}</span>
+                <a href="/logout" class="btn-logout">🚪 Déconnexion</a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Connexion - BankData Insight{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h1>🏦 BankData Insight</h1>
+            <p>Système de Collecte et Analyse de Données Bancaires</p>
+        </div>
+        <form method="POST" class="login-form">
+            <div class="form-group">
+                <label>Nom d'utilisateur</label>
+                <input type="text" name="username" required placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" name="password" required placeholder="admin123">
+            </div>
+            <button type="submit" class="btn-primary btn-block">Se connecter</button>
+        </form>
+        <div class="login-footer">
+            <p>Identifiants par défaut : admin / admin123</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

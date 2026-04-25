@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Collecte Produits{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📦 Souscription Produits Bancaires</h1>
+    <p>Enregistrez les nouveaux produits souscrits par les clients</p>
+</div>
+
+<div class="card">
+    <form id="formProduit" class="form-grid">
+        <div class="form-group">
+            <label>Client *</label>
+            <select name="client_id" required>
+                <option value="">Sélectionnez un client</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}">{{ client.nom }} {{ client.prenom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Type de produit *</label>
+            <select name="type_produit" required>
+                <option value="">Choisir</option>
+                {% for key, value in types_produits.items() %}
+                <option value="{{ key }}">{{ value.icone }} {{ value.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Nom du produit *</label>
+            <input type="text" name="nom_produit" required placeholder="Ex: Compte Épargne Plus">
+        </div>
+        <div class="form-group">
+            <label>Date de souscription *</label>
+            <input type="date" name="date_souscription" required>
+        </div>
+        <div class="form-group">
+            <label>Montant (XAF)</label>
+            <input type="number" name="montant_souscription" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+            <label>Taux d'intérêt (%)</label>
+            <input type="number" name="taux_interet" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+            <label>Durée (mois)</label>
+            <input type="number" name="duree_mois">
+        </div>
+        <div class="form-group">
+            <label>Agence *</label>
+            <select name="agence" required>
+                <option value="">Sélectionnez</option>
+                {% for agence in agences %}
+                <option value="{{ agence.agence }}">{{ agence.agence }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Canal de souscription</label>
+            <select name="canal_souscription">
+                <option value="Agence">Agence</option>
+                <option value="Mobile Banking">Mobile Banking</option>
+                <option value="Internet Banking">Internet Banking</option>
+            </select>
+        </div>
+        <div class="form-actions full-width">
+            <button type="submit" class="btn-primary">✅ Enregistrer</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('formProduit').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    const response = await fetch('/collecte/produits', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    const result = await response.json();
+    if (result.success) {
+        alert('✅ Produit enregistré !');
+        this.reset();
+    } else {
+        alert('❌ Erreurs :\n' + result.errors.join('\n'));
+    }
+});
+</script>
+{% endblock %}
