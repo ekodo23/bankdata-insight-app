@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Gestion Utilisateurs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👥 Gestion des Utilisateurs</h1>
+    <p>Liste des utilisateurs du système</p>
+</div>
+
+<div class="card">
+    <h3>Utilisateurs enregistrés</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom d'utilisateur</th>
+                <th>Rôle</th>
+                <th>Agence</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ roles[user.role] if user.role in roles else user.role }}</td>
+                <td>{{ user.agence or '-' }}</td>
+                <td>{{ user.email or '-' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not users %}
+            <tr>
+                <td colspan="5" style="text-align:center;">Aucun utilisateur trouvé</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
