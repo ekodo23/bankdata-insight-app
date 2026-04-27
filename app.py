@@ -172,6 +172,28 @@ def utilisateurs():
     users = db.fetch_all("SELECT * FROM users ORDER BY username")
     return render_template('utilisateurs.html', users=users, audit_logs=[], roles=Config.ROLES)
 
+@app.route('/clients')
+@login_required
+def clients():
+    clients_list = db.fetch_all("SELECT * FROM clients ORDER BY nom")
+    return render_template('clients.html', clients=clients_list)
+
+@app.route('/api/clients/ajouter', methods=['POST'])
+@login_required
+def ajouter_client():
+    data = request.get_json()
+    
+    if not data.get('nom') or not data.get('prenom') or not data.get('agence'):
+        return jsonify({'success': False, 'message': 'Nom, prénom et agence requis'}), 400
+    
+    db.execute_query(
+        "INSERT INTO clients (nom, prenom, age, telephone, email, agence) VALUES (?, ?, ?, ?, ?, ?)",
+        [data['nom'].strip().upper(), data['prenom'].strip().title(), 
+         data.get('age'), data.get('telephone'), data.get('email'), data['agence']]
+    )
+    
+    return jsonify({'success': True, 'message': 'Client ajouté'}), 201
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

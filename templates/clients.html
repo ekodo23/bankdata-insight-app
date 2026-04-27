@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Gestion Clients{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👥 Gestion des Clients</h1>
+    <p>Ajoutez et gérez les clients de la banque</p>
+</div>
+
+<div class="card" style="margin-bottom: 30px;">
+    <h3>➕ Ajouter un nouveau client</h3>
+    <form id="formClient" class="form-grid">
+        <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" name="nom" required placeholder="Ex: Dupont">
+        </div>
+        <div class="form-group">
+            <label>Prénom *</label>
+            <input type="text" name="prenom" required placeholder="Ex: Jean">
+        </div>
+        <div class="form-group">
+            <label>Âge</label>
+            <input type="number" name="age" min="18" max="100" placeholder="Ex: 35">
+        </div>
+        <div class="form-group">
+            <label>Téléphone</label>
+            <input type="text" name="telephone" placeholder="Ex: 670000001">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="Ex: jean@email.com">
+        </div>
+        <div class="form-group">
+            <label>Agence *</label>
+            <select name="agence" required>
+                <option value="">Sélectionnez</option>
+                <option value="Siège">Siège</option>
+                <option value="Centre-Ville">Centre-Ville</option>
+                <option value="Marché Central">Marché Central</option>
+                <option value="Port">Port</option>
+                <option value="Zone Industrielle">Zone Industrielle</option>
+            </select>
+        </div>
+        <div class="form-actions full-width">
+            <button type="submit" class="btn-primary">✅ Ajouter le client</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3>📋 Liste des clients</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Âge</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Agence</th>
+            </tr>
+        </thead>
+        <tbody id="listeClients">
+            {% for client in clients %}
+            <tr>
+                <td>{{ client.id }}</td>
+                <td>{{ client.nom }}</td>
+                <td>{{ client.prenom }}</td>
+                <td>{{ client.age or '-' }}</td>
+                <td>{{ client.telephone or '-' }}</td>
+                <td>{{ client.email or '-' }}</td>
+                <td>{{ client.agence or '-' }}</td>
+            </tr>
+            {% endfor %}
+            {% if not clients %}
+            <tr>
+                <td colspan="7" style="text-align:center;">Aucun client enregistré</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('formClient').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    const response = await fetch('/api/clients/ajouter', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+        alert('✅ Client ajouté avec succès !');
+        location.reload();
+    } else {
+        alert('❌ Erreur : ' + result.message);
+    }
+});
+</script>
+{% endblock %}
