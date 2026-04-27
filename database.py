@@ -74,4 +74,3 @@ class Database:
             self.execute_query("INSERT OR IGNORE INTO agences (agence, ville) VALUES (?,?)", [ag, 'Douala'])
 
 db = Database()
-ENDFILE
