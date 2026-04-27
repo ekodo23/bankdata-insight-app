@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Rapports & Export{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>📄 Rapports & Export de Données</h1>
+    <p>Téléchargez les données collectées au format CSV</p>
+</div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">💳</div>
+        <div class="stat-value">CSV</div>
+        <div class="stat-label">Transactions</div>
+        <a href="/api/export/transactions" class="btn-primary" style="margin-top:10px;">📥 Télécharger</a>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-value">CSV</div>
+        <div class="stat-label">Satisfaction</div>
+        <a href="/api/export/satisfaction" class="btn-primary" style="margin-top:10px;">📥 Télécharger</a>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">CSV</div>
+        <div class="stat-label">Produits</div>
+        <a href="/api/export/produits" class="btn-primary" style="margin-top:10px;">📥 Télécharger</a>
+    </div>
+</div>
+{% endblock %}
