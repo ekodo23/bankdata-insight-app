@@ -11,6 +11,7 @@ import os
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
+db.create_tables()
 validator = BankDataValidator()
 
 def login_required(f):
@@ -67,7 +68,36 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    stats = {'nb': 0, 'depots': 0, 'retraits': 0, 'enquetes': 0, 'score': 0, 'produits': 0, 'clients': 0}
+    try:
+        nb = db.fetch_one("SELECT COUNT(*) as c FROM transactions")['c']
+    except:
+        nb = 0
+    try:
+        depots = db.fetch_one("SELECT COALESCE(SUM(montant),0) as c FROM transactions WHERE type='DEPOT'")['c']
+    except:
+        depots = 0
+    try:
+        retraits = db.fetch_one("SELECT COALESCE(SUM(montant),0) as c FROM transactions WHERE type='RETRAIT'")['c']
+    except:
+        retraits = 0
+    try:
+        enquetes = db.fetch_one("SELECT COUNT(*) as c FROM enquetes_satisfaction")['c']
+    except:
+        enquetes = 0
+    try:
+        score = db.fetch_one("SELECT COALESCE(AVG(score_global),0) as c FROM enquetes_satisfaction")['c']
+    except:
+        score = 0
+    try:
+        produits = db.fetch_one("SELECT COUNT(*) as c FROM produits_souscrits")['c']
+    except:
+        produits = 0
+    try:
+        clients = db.fetch_one("SELECT COUNT(DISTINCT client_id) as c FROM transactions")['c']
+    except:
+        clients = 0
+
+    stats = {'nb': nb, 'depots': depots, 'retraits': retraits, 'enquetes': enquetes, 'score': score, 'produits': produits, 'clients': clients}
     return render_template('dashboard.html', stats=stats, transactions_mois=[], satisfaction_agence=[], produits_pop=[])
 
 @app.route('/collecte/transactions', methods=['GET', 'POST'])
