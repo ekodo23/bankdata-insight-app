@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_file
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 from config import Config
 from database import db
 from validators import BankDataValidator
-from analytics import BankingAnalytics
 import io
 import csv
 import os
@@ -12,7 +11,6 @@ import os
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
-analytics_engine = BankingAnalytics(db)
 validator = BankDataValidator()
 
 def login_required(f):
@@ -69,15 +67,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    stats = {
-        'nb': db.fetch_one("SELECT COUNT(*) as c FROM transactions")['c'],
-        'depots': db.fetch_one("SELECT COALESCE(SUM(montant),0) as c FROM transactions WHERE type='DEPOT'")['c'],
-        'retraits': db.fetch_one("SELECT COALESCE(SUM(montant),0) as c FROM transactions WHERE type='RETRAIT'")['c'],
-        'enquetes': db.fetch_one("SELECT COUNT(*) as c FROM enquetes_satisfaction")['c'],
-        'score': db.fetch_one("SELECT COALESCE(AVG(score_global),0) as c FROM enquetes_satisfaction")['c'],
-        'produits': db.fetch_one("SELECT COUNT(*) as c FROM produits_souscrits")['c'],
-        'clients': db.fetch_one("SELECT COUNT(DISTINCT client_id) as c FROM transactions")['c']
-    }
+    stats = {'nb': 0, 'depots': 0, 'retraits': 0, 'enquetes': 0, 'score': 0, 'produits': 0, 'clients': 0}
     return render_template('dashboard.html', stats=stats, transactions_mois=[], satisfaction_agence=[], produits_pop=[])
 
 @app.route('/collecte/transactions', methods=['GET', 'POST'])
@@ -90,7 +80,7 @@ def collecte_transactions():
             return jsonify({'success': False, 'errors': v.errors}), 422
         s = v.sanitized_data
         db.execute_query("INSERT INTO transactions (client_id, client_nom, type, montant, devise, date_transaction, heure_transaction, agence, canal, categorie, description, agent_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", [s['client_id'],s['client_nom'],s['type'],s['montant'],s.get('devise','XAF'),s['date_transaction'],s['heure_transaction'],s['agence'],s['canal'],s.get('categorie'),s.get('description'),session['user_id']])
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'message': 'Transaction enregistree'}), 201
     clients = db.fetch_all("SELECT id, nom, prenom FROM clients")
     agences = db.fetch_all("SELECT DISTINCT agence FROM agences")
     return render_template('collecte/transactions.html', clients=clients, agences=agences, categories=Config.CATEGORIES_TRANSACTION)
@@ -105,7 +95,7 @@ def collecte_satisfaction():
             return jsonify({'success': False, 'errors': v.errors}), 422
         s = v.sanitized_data
         db.execute_query("INSERT INTO enquetes_satisfaction (client_id, agence, date_enquete, score_global, score_accueil, score_temps_attente, score_conseil, score_digital, commentaire, recommandation, canal_enquete, agent_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", [s['client_id'],s['agence'],s['date_enquete'],s['score_global'],s.get('score_accueil'),s.get('score_temps_attente'),s.get('score_conseil'),s.get('score_digital'),s.get('commentaire'),s.get('recommandation',False),s['canal_enquete'],session['user_id']])
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'message': 'Enquete enregistree'}), 201
     clients = db.fetch_all("SELECT id, nom, prenom FROM clients")
     agences = db.fetch_all("SELECT DISTINCT agence FROM agences")
     return render_template('collecte/satisfaction.html', clients=clients, agences=agences)
@@ -120,7 +110,7 @@ def collecte_produits():
             return jsonify({'success': False, 'errors': v.errors}), 422
         s = v.sanitized_data
         db.execute_query("INSERT INTO produits_souscrits (client_id, type_produit, nom_produit, date_souscription, montant_souscription, taux_interet, duree_mois, agence, canal_souscription, statut, agent_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)", [s['client_id'],s['type_produit'],s['nom_produit'],s['date_souscription'],s.get('montant_souscription',0),s.get('taux_interet',0),s.get('duree_mois'),s['agence'],s['canal_souscription'],s.get('statut','ACTIF'),session['user_id']])
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'message': 'Produit enregistre'}), 201
     clients = db.fetch_all("SELECT id, nom, prenom FROM clients")
     agences = db.fetch_all("SELECT DISTINCT agence FROM agences")
     return render_template('collecte/produits.html', clients=clients, agences=agences, types_produits=Config.TYPES_PRODUITS)
@@ -149,21 +139,9 @@ def rapports():
 @login_required
 @role_required(['admin'])
 def utilisateurs():
-    return render_template('utilisateurs.html', users=[], audit_logs=[], roles=Config.ROLES)
-
-def init_database():
-    db.execute_query("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, agence TEXT, email TEXT)")
-    db.execute_query("CREATE TABLE IF NOT EXISTS clients (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT NOT NULL, prenom TEXT NOT NULL, age INTEGER, telephone TEXT, email TEXT, agence TEXT)")
-    db.execute_query("CREATE TABLE IF NOT EXISTS agences (id INTEGER PRIMARY KEY AUTOINCREMENT, agence TEXT UNIQUE NOT NULL, ville TEXT, region TEXT)")
-    db.execute_query("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, client_id INTEGER, client_nom TEXT NOT NULL, type TEXT NOT NULL, montant REAL NOT NULL, devise TEXT DEFAULT 'XAF', date_transaction DATE NOT NULL, heure_transaction TIME NOT NULL, agence TEXT, canal TEXT, categorie TEXT, description TEXT, agent_id INTEGER)")
-    db.execute_query("CREATE TABLE IF NOT EXISTS enquetes_satisfaction (id INTEGER PRIMARY KEY AUTOINCREMENT, client_id INTEGER, agence TEXT, date_enquete DATE NOT NULL, score_global INTEGER NOT NULL, score_accueil INTEGER, score_temps_attente INTEGER, score_conseil INTEGER, score_digital INTEGER, commentaire TEXT, recommandation BOOLEAN DEFAULT 0, canal_enquete TEXT, agent_id INTEGER)")
-    db.execute_query("CREATE TABLE IF NOT EXISTS produits_souscrits (id INTEGER PRIMARY KEY AUTOINCREMENT, client_id INTEGER, type_produit TEXT NOT NULL, nom_produit TEXT NOT NULL, date_souscription DATE NOT NULL, montant_souscription REAL DEFAULT 0, taux_interet REAL DEFAULT 0, duree_mois INTEGER, agence TEXT, canal_souscription TEXT, statut TEXT DEFAULT 'ACTIF', agent_id INTEGER)")
-    if not db.fetch_one("SELECT id FROM users WHERE username = 'admin'"):
-        db.execute_query("INSERT INTO users (username, password, role, agence, email) VALUES ('admin','admin123','admin','Siege','admin@banque.cm')")
-    for ag in ['Siege','Centre-Ville','Marche Central','Port','Zone Industrielle']:
-        db.execute_query("INSERT OR IGNORE INTO agences (agence, ville) VALUES (?,?)", [ag, 'Douala'])
+    users = db.fetch_all("SELECT * FROM users ORDER BY username")
+    return render_template('utilisateurs.html', users=users, audit_logs=[], roles=Config.ROLES)
 
 if __name__ == '__main__':
-    init_database()
-        if not db.fetch_one("SELECT id FROM users WHERE username = 'admin'"):
-        db.execute_query("INSERT INTO users (username, password, role, agence, email) VALUES ('admin','admin123','admin','Siege','admin@banque.cm')")
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
